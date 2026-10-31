@@ -133,8 +133,7 @@ describe('CodexExecutionServerRequestRouter', () => {
     );
   });
 
-  it.each(['en', 'zh-CN'] as const)('leaves localized confirmation pending until the user explicitly submits a choice (%s)', async locale => {
-    setLocale(locale);
+  it('leaves the confirmation pending until the user explicitly submits a choice', async () => {
     const question = createPendingQuestion();
     const router = createRouter(question.askUserQuestion, { kind: 'unrestricted' });
     const result = router.handleServerRequest('pending', 'mcpServer/elicitation/request', confirmationRequest);
@@ -145,13 +144,13 @@ describe('CodexExecutionServerRequestRouter', () => {
     expect(settled).toBe(false);
     expect(request.input).toMatchObject({
       questions: [{
-        question: `${locale === 'en' ? 'MCP server:' : 'MCP 服务器：'} cua_repl\n\nAllow Computer Use to use "Obsidian"?`,
+        question: 'MCP server: cua_repl\n\nAllow Computer Use to use "Obsidian"?',
         multiSelect: false,
         isOther: false,
         options: [
-          expect.objectContaining({ value: 'cancel', label: locale === 'en' ? 'Cancel' : '取消' }),
-          expect.objectContaining({ value: 'decline', label: locale === 'en' ? 'Decline' : '拒绝' }),
-          expect.objectContaining({ value: 'accept', label: locale === 'en' ? 'Allow' : '允许' }),
+          expect.objectContaining({ value: 'cancel', label: 'Cancel' }),
+          expect.objectContaining({ value: 'decline', label: 'Decline' }),
+          expect.objectContaining({ value: 'accept', label: 'Allow' }),
         ],
       }],
     });
@@ -378,8 +377,7 @@ describe('CodexExecutionServerRequestRouter', () => {
 });
 
 
-it('localizes Codex command approval labels without changing native decisions', async () => {
-  setLocale('zh-CN');
+it('labels Codex command approvals without changing native decisions', async () => {
   const requestApproval = vi.fn(async (request: ProviderApprovalInteractionRequest) => ({
     interactionId: request.interactionId, decision: 'allow' as const,
   }));
@@ -394,9 +392,9 @@ it('localizes Codex command approval labels without changing native decisions', 
       threadId: 'thread-confirmation', turnId: 'turn-confirmation', itemId: 'command-item', command: 'npm test',
     })).resolves.toEqual({ decision: 'accept' });
     const [request] = requestApproval.mock.calls[0];
-    expect(request.description).toBe('执行：npm test');
+    expect(request.description).toBe('Execute: npm test');
     expect(request.decisionOptions?.map(option => [option.label, option.value])).toEqual([
-      ['允许一次', 'allow-once'], ['始终允许', 'allow-always'], ['拒绝', 'deny'],
+      ['Allow once', 'allow-once'], ['Always allow', 'allow-always'], ['Deny', 'deny'],
     ]);
   } finally {
     setLocale('en');

@@ -10,18 +10,10 @@ import type { Locale, TranslationKey } from './types';
 
 type TranslationDictionary = typeof en;
 
-const AVAILABLE_LOCALES: readonly Locale[] = [
-  'en',
-  'zh-CN',
-  'zh-TW',
-  'ja',
-  'ko',
-  'de',
-  'fr',
-  'es',
-  'ru',
-  'pt',
-];
+// English-only build: the other locale files stay in the repo (so upstream
+// merges stay clean) but are not selectable. setLocale() rejects them, so a
+// stored non-English locale falls back to English.
+const AVAILABLE_LOCALES: readonly Locale[] = ['en'];
 
 const translations: Partial<Record<Locale, TranslationDictionary>> = { en };
 

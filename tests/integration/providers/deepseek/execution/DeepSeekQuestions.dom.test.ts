@@ -258,21 +258,16 @@ async function startChild(): Promise<(value: unknown) => void> {
 const allow = { decide: () => fireEvent.click(within(document.body).getByRole('button', { name: 'Allow once' })), sent: 'allowed-once' };
 it.each([
   { name: 'a direct call', locale: 'en', reason: nativeReason.displayReason.en, callId: 'bash-1', order: 'tool first', ...allow },
-  { name: 'a direct call whose tool frame arrives later', locale: 'zh-CN', reason: nativeReason.displayReason.zh, callId: 'bash-1', order: 'approval first', ...allow },
+  { name: 'a direct call whose tool frame arrives later', locale: 'en', reason: nativeReason.displayReason.en, callId: 'bash-1', order: 'approval first', ...allow },
   { name: 'a code-mode call', locale: 'fr', reason: nativeReason.displayReason.en, callId: 'code-1:ptc:1', order: 'tool first', ...allow },
-  // Native `zh` is Simplified Chinese; Traditional Chinese falls back to English instead.
-  { name: 'a Traditional Chinese locale', locale: 'zh-TW', reason: nativeReason.displayReason.en, callId: 'bash-1', order: 'tool first', ...allow },
   { name: 'a denied call', locale: 'en', reason: nativeReason.displayReason.en, callId: 'bash-1', order: 'tool first',
     decide: () => fireEvent.click(within(document.body).getByRole('button', { name: 'Deny' })), sent: 'rejected' },
   { name: 'a dismissed call', locale: 'en', reason: nativeReason.displayReason.en, callId: 'bash-1', order: 'tool first',
     decide: () => fireEvent.keyDown(within(document.body).getByRole('button', { name: 'Allow once' }), { key: 'Escape' }), sent: 'cancelled' },
 ])('renders the action and localized native reason for $name and sends the native decision', async ({ locale, reason, callId, order, decide, sent }) => {
   settings.locale = locale;
-  const chinese = locale === 'zh-CN' || locale === 'zh-TW';
-  if (chinese) setLocale(locale);
-  const detailsName = locale === 'zh-CN' ? 'Bash 授权详情' : locale === 'zh-TW' ? 'Bash 授權詳情' : 'Bash approval details';
-  const description = locale === 'zh-CN' ? '运行命令：' : locale === 'zh-TW' ? '執行命令：' : 'Run command: ';
-  const allowName = locale === 'zh-CN' ? '允许一次' : '允許一次';
+  const detailsName = 'Bash approval details';
+  const description = 'Run command: ';
   renderApprovals(); create();
   const run = session.execute(request());
   const events: ProviderExecutionEvent[] = [];
@@ -300,8 +295,7 @@ it.each([
     expect(details.textContent).toBe(`${description}${command}`);
     expect(within(document.body).getByText(reason)).toBeTruthy();
     expect((await axe(document.body)).violations).toEqual([]);
-    if (chinese) fireEvent.click(within(document.body).getByRole('button', { name: allowName }));
-    else decide();
+    decide();
     expect((await peer.waitForCall('$events/result')).args).toEqual({ clientId: expect.any(String), eventId: 'approval', outcome: { kind: 'result', value: sent } });
     expect(session.getStatus()).not.toBe('invalidated');
   } finally {

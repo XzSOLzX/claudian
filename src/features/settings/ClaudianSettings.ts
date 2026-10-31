@@ -15,7 +15,7 @@ import type {
 import { SkillsSettingsTab } from '@/features/agent-skills/SkillsSettingsTab';
 import type { FeatureHost } from '@/features/FeatureHost';
 import { buildNavMappingText, parseNavMappings } from '@/features/settings/keyboardNavigation';
-import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '@/i18n/i18n';
+import { setLocale, t } from '@/i18n/i18n';
 import type { Locale } from '@/i18n/types';
 import { AccessibleSetting } from '@/shared/settings/AccessibleSetting';
 import { formatContextLimit, parseContextLimit } from '@/shared/settings/contextLimit';
@@ -78,7 +78,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     setLocale(this.host.settings.locale as Locale);
 
-    const providerTabs = ProviderRegistry.getRegisteredProviderIds();
+    // Only Claude gets a settings tab; other providers stay registered, just not shown.
+    const providerTabs: ProviderId[] = ProviderRegistry.getRegisteredProviderIds().filter(id => id === 'claude');
     const tabIds: SettingsTabId[] = ['general', 'providers', 'skills'];
     const preferredProvider = providerTabs.includes(this.host.settings.settingsProvider)
       ? this.host.settings.settingsProvider
@@ -248,34 +249,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
   private renderGeneralTab(container: HTMLElement): void {
     const textDraft = this.textEdits.projectDraft(this.host.settings);
-    new AccessibleSetting(container)
-      .setName(t('settings.language.name'))
-      .setDesc(t('settings.language.desc'))
-      .addDropdown((dropdown) => {
-        const locales = getAvailableLocales();
-        for (const locale of locales) {
-          dropdown.addOption(locale, getLocaleDisplayName(locale));
-        }
-        dropdown
-          .setValue(this.host.settings.locale)
-          .onChange(async (value) => {
-            const locale = value as Locale;
-            if (!setLocale(locale)) {
-              dropdown.setValue(this.host.settings.locale);
-              return;
-            }
-            try {
-              await this.host.mutateSettings((settings) => {
-                settings.locale = locale;
-              });
-            } finally {
-              const committedLocale = this.host.settings.locale;
-              setLocale(committedLocale as Locale);
-              dropdown.setValue(committedLocale);
-            }
-            this.update();
-          });
-      });
+    // Language picker removed: the UI is English-only.
 
     // --- Display ---
 
@@ -446,23 +420,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
       );
 
     if (this.host.settings.enableAutoTitleGeneration) {
-      new AccessibleSetting(container)
-        .setName(t('settings.titleLanguage.name'))
-        .setDesc(t('settings.titleLanguage.desc'))
-        .addDropdown((dropdown) => {
-          dropdown.addOption('', t('settings.titleLanguage.followInterface'));
-          for (const locale of getAvailableLocales()) {
-            dropdown.addOption(locale, getLocaleDisplayName(locale));
-          }
-          dropdown
-            .setValue(this.host.settings.titleGenerationLocale || '')
-            .onChange(async (value) => {
-              await this.host.mutateSettings((settings) => {
-                settings.titleGenerationLocale = value;
-              });
-            });
-        });
-
       new AccessibleSetting(container)
         .setName(t('settings.titleModel.name'))
         .setDesc(t('settings.titleModel.desc'))
